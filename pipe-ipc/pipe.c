@@ -4,15 +4,17 @@
 #include <unistd.h>
 #include "../common/data-gen.h"
 
-int executePipeIpc(int messageSize);
-int writeToPipe(int pipe[], int messageSize);
+int executePipeIpc(char message[]);
+int writeToPipe(int pipe[], char messageSize[]);
 int readFromPipe(int pipe[], int bufferSize);
 
 int main(int argc, char* argv[]) {
-    return executePipeIpc(2);
+    /* Get random message with given length */ 
+    char* message = getRandomString(1);
+    return executePipeIpc(message);
 }
 
-int executePipeIpc(int messageSize) {
+int executePipeIpc(char message[]) {
     /* Create parent to child pipe */
     int parent_to_child[2];
     if (pipe(parent_to_child) == -1) {return 1;}
@@ -22,18 +24,15 @@ int executePipeIpc(int messageSize) {
     if (pid == -1) {return 2;}
 
     if (pid != 0){
-        return writeToPipe(parent_to_child, messageSize);
+        return writeToPipe(parent_to_child, message);
     } else {
-        return readFromPipe(parent_to_child, messageSize + 1);
+        return readFromPipe(parent_to_child, strlen(message) + 1);
     }
 }
 
-int writeToPipe(int pipe[], int messageSize) {
+int writeToPipe(int pipe[], char message[]) {
     /* Close read end of pip */
     close(pipe[0]);
-    
-    /* Get random message with given length */ 
-    char* message = getRandomString(messageSize);
 
     printf("Parent writing to pipe...\n");
     if (write(pipe[1], message, strlen(message) + 1) == - 1) {return 5;}
