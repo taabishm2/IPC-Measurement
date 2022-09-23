@@ -2,54 +2,54 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include "../common/data-gen.h"
+
+int executePipeIpc(int messageSize);
+int writeToPipe(int pipe[], int messageSize);
+int readFromPipe(int pipe[], int bufferSize);
 
 int main(int argc, char* argv[]) {
-    int child_to_parent[2]; // Child to parent
-    int parent_to_child[2]; // Parent to child
+    return executePipeIpc(2);
+}
 
-    if (pipe(child_to_parent) == -1) {return 1;}
+int executePipeIpc(int messageSize) {
+    /* Create parent to child pipe */
+    int parent_to_child[2];
     if (pipe(parent_to_child) == -1) {return 1;}
 
+    /* Fork a child process */
     int pid = fork();
     if (pid == -1) {return 2;}
 
-    // Child process
-    if (pid == 0){
-        close(child_to_parent[0]);
-        close(parent_to_child[1]);
-        int x;
-        if (read(parent_to_child[0], &x, sizeof(x)) == -1) {
-            printf("Exit code 3");
-            return 3;
-        }
-        printf("Child received %d\n", x);
-        x *= 10;
-        if (write(child_to_parent[1], &x, sizeof(x))==-1) {
-            printf("Exit code 4");
-            return 4;
-        }
-        printf("Child wrote %d\n", x);
-        close(child_to_parent[1]);
-        close(parent_to_child[0]);
+    if (pid != 0){
+        return writeToPipe(parent_to_child, messageSize);
     } else {
-        close(child_to_parent[1]); // Close child_to_parent write end
-        close(parent_to_child[0]); // Close parent_to_child read end
-        int y = 123;
-        printf("Parent writing %d\n", y);
-        if (write(parent_to_child[1], &y, sizeof(y)) == - 1) {
-            printf("Exit code 5");
-            return 5;
-        }
-        printf("Parent wrote %d\n", y);
-        if (read(child_to_parent[0], &y, sizeof(y)) == -1) {
-            printf("Exit code 6");
-            return 6;
-        }
-        printf("Parent received %d\n", y);
-        close(child_to_parent[0]);
-        close(parent_to_child[1]);
-        //wait(NULL);
+        return readFromPipe(parent_to_child, messageSize + 1);
     }
+}
+
+int writeToPipe(int pipe[], int messageSize) {
+    /* Close read end of pip */
+    close(pipe[0]);
+    
+    /* Get random message with given length */ 
+    char* message = getRandomString(messageSize);
+
+    printf("Parent writing to pipe...\n");
+    if (write(pipe[1], message, strlen(message) + 1) == - 1) {return 5;}
+    close(pipe[1]);
+
+    return 0;
+}
+
+int readFromPipe(int pipe[], int bufferSize) {
+    /* Close write end of pipe */
+    close(pipe[1]);
+
+    char readbuffer[bufferSize]; 
+    if (read(pipe[0], readbuffer, sizeof(readbuffer)) == -1) {return 3;}
+    printf("Child received %s\n", readbuffer);
+    close(pipe[0]);
 
     return 0;
 }
