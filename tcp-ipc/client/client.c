@@ -4,15 +4,20 @@
 #include<netinet/in.h>
 #include<stdlib.h>
 #include<string.h>
+#include "../../common/data-gen.h"
 
 #define PORT 9988
+#define RESPONSE_BUFFER_SIZE 10
 
+int executeClientTcpIpc(char message[]);
 
-int main()
-{
+int main(int argc, char* argv[]) {
+    /* Get random message with given length */ 
+    char* message = getRandomString(3);
+    return executeClientTcpIpc(message);
+}
 
-	/* Use programmatic generation for the data to be sent */
-
+int executeClientTcpIpc(char message[]) {
 	struct sockaddr_in server;
 	server.sin_family = AF_INET; /* IPv4 */
 	server.sin_port = htons(PORT); /* Port Number */
@@ -22,24 +27,12 @@ int main()
 	int sockedId = socket(AF_INET, SOCK_STREAM, 0);
 	connect(sockedId, (struct sockaddr * )&server, sizeof(server));
 
-	char requestData[1024];
-	printf("Enter request Data: ");
-	scanf("%s", requestData);
-	send(sockedId, requestData, strlen(requestData), 0);
+	send(sockedId, message, strlen(message), 0);
 	printf("Request sent !\n");
 
-	unsigned char buf[1024];
-	FILE* writefp = fopen("recieved.txt","wb");
-
-	size_t size;
-	while( (size = read(sockedId, buf, 1024) ) > 0)
-	{    
-		fwrite(buf, 1, size, writefp);
-		printf(".");
-	}
-	fclose(writefp);
-
-	printf("\nFile recieved!\n");
+	char responseMessage[RESPONSE_BUFFER_SIZE]={0};
+	read(sockedId, responseMessage, RESPONSE_BUFFER_SIZE);
+	printf("Response received: %s\n", responseMessage);
 
 	close(sockedId);
 

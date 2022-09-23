@@ -6,9 +6,15 @@
 #include<string.h>
 
 #define PORT 9988
+#define BUFFER_SIZE 1024
 
-int main()
-{
+int executeServerTcpIpc(void);
+
+int main(int argc, char* argv[]) {
+    return executeServerTcpIpc();
+}
+
+int executeServerTcpIpc(void) {
 	struct sockaddr_in server;
 	server.sin_family = AF_INET; /* IPV4 */
 	server.sin_port = htons(PORT); /* Port Number */
@@ -20,30 +26,16 @@ int main()
 	/* Bind address-port */
 	bind(socketId, (struct sockaddr *)&server, addressSize);
 
-
 	/* Listen for client */
-	printf("Server listening for client...\n");
 	listen(socketId, 0);
 	int client = accept(socketId, (struct sockaddr *)&server, (socklen_t *)&addressSize);
-	printf("Server recieved request...\n");
 
-	char fileToSend[1024]={0};
-	read(client, fileToSend, 1024);
-	printf("Client asked for: %s\n", fileToSend);
+	char requestMessage[BUFFER_SIZE]={0};
+	read(client, requestMessage, BUFFER_SIZE);
+	printf("Data received: %s\n", requestMessage);
 
-	FILE* readfp;
-	unsigned char buf[1024];
-
-	readfp = fopen("testfile.txt","rb");
-	size_t size;
-	while( (size = fread(buf, 1, sizeof(buf), readfp) ) > 0)
-	{
-		send(client, buf, size, 0);
-		printf(".");
-	}
-	fclose(readfp);
-
-	printf("\nFile sent!\n");
+	char response[] = "1";
+	send(client, response, strlen(response), 0);
 
 	close(client);
 	close(socketId);
