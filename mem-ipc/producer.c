@@ -3,15 +3,21 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include "../common/data-gen.h"
+
+int executeShMemIpc(char message[]);
 
 int main(int argc, char *argv[])
 {
-	printf("Running producer...\n");
+	/* Get random message with given length */ 
+    char* message = getRandomString(3);
+	return executeShMemIpc(message);
+}
 
+int executeShMemIpc(char message[]) {
 	char SH_MEM_ID[] = "/SHARED_MEM_ID";
-	char SH_MEM_CONTENTS[] = "Test hs sfhslf hsfu fushfls dfs";
+	char* SH_MEM_CONTENTS = message;
 	long SH_MEM_SIZE = strlen(SH_MEM_CONTENTS);
-	printf("Memory: %ld\n", SH_MEM_SIZE);
 
 	char data[SH_MEM_SIZE];
 	pid_t processId = getpid();
