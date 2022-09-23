@@ -4,7 +4,7 @@
 #include<netinet/in.h>
 #include<stdlib.h>
 #include<string.h>
-#include "../../common/data-gen.h"
+#include "../common/data-gen.h"
 
 #define PORT 9988
 #define RESPONSE_BUFFER_SIZE 10

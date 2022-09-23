@@ -1,4 +1,0 @@
-testdata in file
-helllo
-123
-*&!
