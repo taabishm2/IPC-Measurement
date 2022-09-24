@@ -9,6 +9,7 @@
 #define BUFFER_SIZE 1024
 
 int executeServerTcpIpc(void);
+char* getResponse(char message[]);
 
 int main(int argc, char* argv[]) {
     return executeServerTcpIpc();
@@ -34,11 +35,16 @@ int executeServerTcpIpc(void) {
 	read(client, requestMessage, BUFFER_SIZE);
 	printf("Data received: %s\n", requestMessage);
 
-	char response[] = "1";
+	char* response = requestMessage;
 	send(client, response, strlen(response), 0);
 
 	close(client);
 	close(socketId);
 
 	return 0;
+}
+
+char* getResponse(char message[]) {
+    return message;
+    // return "0";
 }
