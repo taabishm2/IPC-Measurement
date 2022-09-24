@@ -1,14 +1,15 @@
 CC=gcc
 CFLAGS=-Wall
-LDFLAGS=-lrt
+LDFLAGS=-lrt -lpthread
 
 all: producer consumer
 
-producer: producer.c
-	$(CC) $(CFLAGS) $< -o $@ $(LDFLAGS)
+producer: producer.c shm.c
+	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
-consumer: consumer.c
-	$(CC) $(CFLAGS) $< -o $@ $(LDFLAGS)
+consumer: consumer.c shm.c
+	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
+.PHONY: clean
 clean:
 	rm -rf consumer producer

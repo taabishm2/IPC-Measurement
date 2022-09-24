@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <string.h>
 #include "../common/data-gen.h"
+#include "shm.h"
 
 int executeShMemIpc(char message[]);
 
@@ -23,25 +24,10 @@ int executeShMemIpc(char message[]) {
 	pid_t processId = getpid();
 	sprintf(data, SH_MEM_CONTENTS, processId);
 
-	int shMemFd = shm_open(SH_MEM_ID, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
-	if (shMemFd == -1)
+	void *shMemAddress = shmCreate(SH_MEM_ID, SH_MEM_SIZE, O_RDWR | O_CREAT, PROT_WRITE, 1);
+	if (!shMemAddress)
 	{
-		perror("shm_open()");
-		return 1;
-	}
-
-	int ftruncate_return = ftruncate(shMemFd, SH_MEM_SIZE);
-	if (ftruncate_return == -1)
-	{
-		perror("ftruncate()");
-		return 2;
-	}
-
-	void *shMemAddress = mmap(NULL, SH_MEM_SIZE, PROT_WRITE, MAP_SHARED, shMemFd, 0);
-	if (shMemAddress == MAP_FAILED)
-	{
-		perror("mmap()");
-		return 3;
+		return -1;
 	}
 
 	int len = strlen(data) + 1;
@@ -58,7 +44,7 @@ int executeShMemIpc(char message[]) {
 		return 4;
 	}
 
-	shMemFd = shm_unlink(SH_MEM_ID);
+	int shMemFd = shm_unlink(SH_MEM_ID);
 	if (shMemFd == -1)
 	{
 		perror("unlink()");

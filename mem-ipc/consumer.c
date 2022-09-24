@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include "shm.h"
 
 #define SH_MEM_BUFFER_SIZE 1024
 
@@ -10,18 +11,10 @@ int main(int argc, char *argv[]){
 	char SH_MEM_ID[] = "/SHARED_MEM_ID";
 	char data[SH_MEM_BUFFER_SIZE];
 
-	int shMemFd = shm_open(SH_MEM_ID, O_RDONLY, S_IRUSR | S_IWUSR);
-	if (shMemFd == -1)
+	void *shMemAddress = shmCreate(SH_MEM_ID, SH_MEM_BUFFER_SIZE, O_RDONLY, PROT_READ, 0);
+	if (!shMemAddress)
 	{
-		perror("shm_open()");
-		return 2;
-	}
-
-	void *shMemAddress = mmap(NULL, SH_MEM_BUFFER_SIZE, PROT_READ, MAP_SHARED, shMemFd, 0);
-	if (shMemAddress == MAP_FAILED)
-	{
-		perror("mmap()");
-		return 3;
+		return -1;
 	}
 
 	memcpy(data, shMemAddress, SH_MEM_BUFFER_SIZE);
