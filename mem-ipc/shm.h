@@ -2,6 +2,7 @@
 #include <semaphore.h>
 
 #define SHM_BUFFER_SIZE   (16*1024)
+#define DEBUG
 
 enum
 {

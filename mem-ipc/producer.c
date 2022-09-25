@@ -7,10 +7,10 @@
 #include "shm.h"
 
 // Sends Data and receives an echo back (same data)
-void sendDataRTT()
+void sendDataRTT(const size_t msgSize)
 {
 	const char *SH_MEM_ID = "/SHARED_MEM_ID";
-	const size_t MSG_LENGTH = 17*1024;
+	const size_t MSG_LENGTH = msgSize;
 	char *msg = getRandomString(MSG_LENGTH);
 
 	// Our shared memory buffer contains a SharedMem_t struct
@@ -49,7 +49,9 @@ void sendDataRTT()
 		remaining -= shared_buffer->length;
 		memcpy(shared_buffer->buf, &msg[ptr], shared_buffer->length);
 		ptr += shared_buffer->length;
+#ifdef DEBUG
 		printf("Inserted %d bytes into SHM\n", shared_buffer->length);
+#endif
 		
 		// Release lock
 		sem_post(&shared_buffer->full);
@@ -69,21 +71,25 @@ void sendDataRTT()
 
 		memcpy(&msg[ptr], shared_buffer->buf, shared_buffer->length);
 		ptr += shared_buffer->length;
+#ifdef DEBUG
 		printf("Data Read: \"%d\"\n", shared_buffer->length);
+#endif
 		remaining -= shared_buffer->length;
 
 		// Release lock
 		sem_post(&shared_buffer->empty);
 	}
 	
+#ifdef DEBUG
 	printf("Producer received echo back! Exiting\n");
+#endif
 }
 
 // Sends Data and receives a simple ACK from the receiver
-void sendDataACK()
+void sendDataACK(const size_t msgSize)
 {
 	const char *SH_MEM_ID = "/SHARED_MEM_ID";
-	const size_t MSG_LENGTH = 17*1024;
+	const size_t MSG_LENGTH = msgSize;
 	char *msg = getRandomString(MSG_LENGTH);
 
 	// Our shared memory buffer contains a SharedMem_t struct
@@ -122,7 +128,9 @@ void sendDataACK()
 		remaining -= shared_buffer->length;
 		memcpy(shared_buffer->buf, &msg[ptr], shared_buffer->length);
 		ptr += shared_buffer->length;
+#ifdef DEBUG
 		printf("Inserted %d bytes into SHM\n", shared_buffer->length);
+#endif
 		
 		// Release lock
 		sem_post(&shared_buffer->full);
@@ -131,12 +139,31 @@ void sendDataACK()
 	// Wait for has_completed to turn 1 (ACK). NOTE: Mark it volatile!
 	while(shared_buffer->has_completed != 1)
 		;
-	
+
+#ifdef DEBUG
 	printf("Producer received ACK! Exiting\n");
+#endif
 }
 
 int main(int argc, char *argv[])
 {
-	//sendDataACK();
-	sendDataRTT();
+	if (argc != 3)
+	{
+		printf("./producer <return type>  <msgSize>\n");
+		return 0;
+	}
+
+	int msgSize, type;
+	type = atoi(argv[1]);
+	msgSize = atoi(argv[2]);
+
+	if (type == RETURN_ACK)
+	{
+		sendDataACK(msgSize);
+	}
+	else
+	{
+		sendDataRTT(msgSize);
+	}
+
 }
