@@ -19,7 +19,7 @@ int main(int argc, char *argv[]){
 	int remaining = shared_buffer->total_length;
 	uint8_t *data = (uint8_t *)malloc(remaining);
 	int ptr = 0;
-	while(remaining > 0)
+	while (remaining > 0)
 	{
 		// Try to acquire lock here
 		sem_wait(&shared_buffer->full);
@@ -33,9 +33,27 @@ int main(int argc, char *argv[]){
 		sem_post(&shared_buffer->empty);
 	}
 
-	if (shared_buffer->return_type == RETURN_ACK)
+	shared_buffer->has_completed = 1;
+
+	if (shared_buffer->return_type == RETURN_MIRROR)
 	{
-		shared_buffer->has_completed = 1;
+		// Send received data back (Round Trip)
+		remaining = shared_buffer->total_length;
+		ptr = 0;
+		while (remaining > 0)
+		{
+			// Try to acquire lock here
+			sem_wait(&shared_buffer->empty);
+
+			shared_buffer->length = remaining > SHM_BUFFER_SIZE ? SHM_BUFFER_SIZE : remaining;
+			remaining -= shared_buffer->length;
+			memcpy(shared_buffer->buf, &data[ptr], shared_buffer->length);
+			ptr += shared_buffer->length;
+			printf("Inserted %d bytes into SHM\n", shared_buffer->length);
+			
+			// Release lock
+			sem_post(&shared_buffer->full);
+		}
 	}
 
 	return 0;
