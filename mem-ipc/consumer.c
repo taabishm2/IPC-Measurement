@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "shm.h"
+#include "../common/data-gen.h"
 
 int main(int argc, char *argv[]){
 	char SH_MEM_ID[] = "/SHARED_MEM_ID";
@@ -26,9 +27,9 @@ int main(int argc, char *argv[]){
 
 		memcpy(&data[ptr], shared_buffer->buf, shared_buffer->length);
 		ptr += shared_buffer->length;
-#ifdef DEBUG
-		printf("Data Read: \"%d\"\n", shared_buffer->length);
-#endif
+		#ifdef DEBUG
+			printf("Data Read: \"%d\"\n", shared_buffer->length);
+		#endif
 		remaining -= shared_buffer->length;
 
 		// Release lock
@@ -51,9 +52,9 @@ int main(int argc, char *argv[]){
 			remaining -= shared_buffer->length;
 			memcpy(shared_buffer->buf, &data[ptr], shared_buffer->length);
 			ptr += shared_buffer->length;
-#ifdef DEBUG
-			printf("Inserted %d bytes into SHM\n", shared_buffer->length);
-#endif
+			#ifdef DEBUG
+				printf("Inserted %d bytes into SHM\n", shared_buffer->length);
+			#endif
 			
 			// Release lock
 			sem_post(&shared_buffer->full);

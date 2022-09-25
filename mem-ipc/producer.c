@@ -55,9 +55,9 @@ void sendDataRTT(const size_t msgSize)
 		remaining -= shared_buffer->length;
 		memcpy(shared_buffer->buf, &msg[ptr], shared_buffer->length);
 		ptr += shared_buffer->length;
-#ifdef DEBUG
-		printf("Inserted %d bytes into SHM\n", shared_buffer->length);
-#endif
+		#ifdef DEBUG
+			printf("Inserted %d bytes into SHM\n", shared_buffer->length);
+		#endif
 		
 		// Release lock
 		sem_post(&shared_buffer->full);
@@ -77,18 +77,18 @@ void sendDataRTT(const size_t msgSize)
 
 		memcpy(&msg[ptr], shared_buffer->buf, shared_buffer->length);
 		ptr += shared_buffer->length;
-#ifdef DEBUG
-		printf("Data Read: \"%d\"\n", shared_buffer->length);
-#endif
+		#ifdef DEBUG
+			printf("Data Read: \"%d\"\n", shared_buffer->length);
+		#endif
 		remaining -= shared_buffer->length;
 
 		// Release lock
 		sem_post(&shared_buffer->empty);
 	}
 	
-#ifdef DEBUG
-	printf("Producer received echo back! Exiting\n");
-#endif
+	#ifdef DEBUG
+		printf("Producer received echo back! Exiting\n");
+	#endif
 }
 
 // Sends Data and receives a simple ACK from the receiver
@@ -140,9 +140,9 @@ void sendDataACK(const size_t msgSize)
 		remaining -= shared_buffer->length;
 		memcpy(shared_buffer->buf, &msg[ptr], shared_buffer->length);
 		ptr += shared_buffer->length;
-#ifdef DEBUG
-		printf("Inserted %d bytes into SHM\n", shared_buffer->length);
-#endif
+		#ifdef DEBUG
+			printf("Inserted %d bytes into SHM\n", shared_buffer->length);
+		#endif
 		
 		// Release lock
 		sem_post(&shared_buffer->full);
@@ -152,9 +152,9 @@ void sendDataACK(const size_t msgSize)
 	while(shared_buffer->has_completed != 1)
 		;
 
-#ifdef DEBUG
-	printf("Producer received ACK! Exiting\n");
-#endif
+	#ifdef DEBUG
+		printf("Producer received ACK! Exiting\n");
+	#endif
 }
 
 int main(int argc, char *argv[])
