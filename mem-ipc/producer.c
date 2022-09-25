@@ -39,6 +39,12 @@ void sendDataRTT(const size_t msgSize)
 		exit(-1);
 	}
 
+	// Execute the consumer process now
+	if (fork() == 0)
+	{
+		execl("consumer", "consumer", NULL);
+	}
+
 	int remaining = MSG_LENGTH, ptr = 0;
 	while (remaining > 0)
 	{
@@ -116,6 +122,12 @@ void sendDataACK(const size_t msgSize)
 	{
 		printf("Semaphore init failed!\n");
 		exit(-1);
+	}
+
+	// Execute the consumer process now
+	if (fork() == 0)
+	{
+		execl("consumer", "consumer", NULL);
 	}
 
 	int remaining = MSG_LENGTH, ptr = 0;
