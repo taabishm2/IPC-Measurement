@@ -3,12 +3,6 @@
 
 #define SHM_BUFFER_SIZE   (16*1024)
 
-enum
-{
-    RETURN_ACK = 0, // Receiver sends back a tiny ACK
-    RETURN_MIRROR   // Receiver sends back entire msg 
-};
-
 typedef struct
 {
     int length;                     // Length of current data in shared memory
