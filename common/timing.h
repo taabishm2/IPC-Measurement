@@ -2,6 +2,7 @@
 #define TIMING_H
 
 #include <time.h>
+#include <stdint.h>
 
 /* Example usage
 

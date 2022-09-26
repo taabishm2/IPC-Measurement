@@ -4,7 +4,10 @@
 #include <unistd.h>
 #include <string.h>
 #include "../common/data-gen.h"
+#include "../common/timing.h"
 #include "shm.h"
+
+unsigned long start, end;
 
 // Sends Data and receives an echo back (same data)
 void sendDataRTT(const size_t msgSize)
@@ -44,6 +47,8 @@ void sendDataRTT(const size_t msgSize)
 	{
 		execl("consumer", "consumer", NULL);
 	}
+
+    start = time_tsc_start();
 
 	int remaining = MSG_LENGTH, ptr = 0;
 	while (remaining > 0)
@@ -85,7 +90,10 @@ void sendDataRTT(const size_t msgSize)
 		// Release lock
 		sem_post(&shared_buffer->empty);
 	}
-	
+    
+    end = time_tsc_end();
+    printf("%Lf\n", convert_tsc(start, end));
+
 	#ifdef DEBUG
 		printf("Producer received echo back! Exiting\n");
 	#endif
@@ -130,6 +138,8 @@ void sendDataACK(const size_t msgSize)
 		execl("consumer", "consumer", NULL);
 	}
 
+    start = time_tsc_start();
+
 	int remaining = MSG_LENGTH, ptr = 0;
 	while(remaining > 0)
 	{
@@ -151,6 +161,9 @@ void sendDataACK(const size_t msgSize)
 	// Wait for has_completed to turn 1 (ACK). NOTE: Mark it volatile!
 	while(shared_buffer->has_completed != 1)
 		;
+
+    end = time_tsc_end();
+    printf("%Lf\n", convert_tsc(start, end));
 
 	#ifdef DEBUG
 		printf("Producer received ACK! Exiting\n");
