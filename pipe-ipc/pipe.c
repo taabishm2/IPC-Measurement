@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "../common/data-gen.h"
+#include "../common/timing.h"
 
 char* getResponse(char* message, int returnType);
 int executePipeIpc(char* message, int messageSize, int bufferSize, int returnType);
@@ -54,6 +55,9 @@ int writeToPipe(int parent_to_child[], int child_to_parent[], char* message, int
     /* Close write end of child_to_parent */
     close(child_to_parent[1]);
 
+    unsigned long start, end;
+	start = time_tsc_start();
+
     multi_write(parent_to_child[1], message, messageSize);
     close(parent_to_child[1]);
 
@@ -64,6 +68,9 @@ int writeToPipe(int parent_to_child[], int child_to_parent[], char* message, int
         printf("Parent Data size: %lu\n", strlen(readbuffer));
     #endif
     close(child_to_parent[0]);
+
+    end = time_tsc_end();
+    printf("%Lf\n", convert_tsc(start, end));
 
     return 0;
 }
