@@ -13,7 +13,7 @@ int main(int argc , char *argv[])
 
 	int socket_desc , new_socket , c;
 	struct sockaddr_in server , client;
-	char *message = malloc(sizeof(char) * msgSize);
+	char *message = malloc(sizeof(char) * msgSize * 2);
 	memset(message, 'a', msgSize);
 	
 	//Create socket
