@@ -1,4 +1,5 @@
 #include "tcp.h"
+#include "../common/timing.h"
 
 int main(int argc , char *argv[])
 {
@@ -41,6 +42,14 @@ int main(int argc , char *argv[])
 	
 	//Listen
 	listen(socket_desc , 3);
+
+	if (fork() == 0)
+	{
+		char type[15], msgSizeBuf[15];
+		sprintf(type, "%d", returnType);
+		sprintf(msgSizeBuf, "%d", msgSize);
+		execl("client", "client", type, msgSizeBuf, NULL);
+	}
 	
 	//Accept and incoming connection
 #ifdef DEBUG
@@ -52,6 +61,9 @@ int main(int argc , char *argv[])
 #ifdef DEBUG
 	puts("Connection accepted");
 #endif
+
+	unsigned long start, end;
+	start = time_tsc_start();
 	
 	//Send msg to client
 	sendBuffer(new_socket , message , msgSize);
@@ -74,6 +86,10 @@ int main(int argc , char *argv[])
 		printf("Received echo!\n");
 #endif
 	}
+
+	end = time_tsc_end();
+	long double diff = convert_tsc(start, end);
+	printf("%Lf\n", diff);
 
 	
 	return 0;

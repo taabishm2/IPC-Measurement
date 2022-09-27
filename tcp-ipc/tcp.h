@@ -11,6 +11,7 @@
 #include<unistd.h>
 #include <netinet/tcp.h>
 #include<arpa/inet.h>	//inet_addr
+#include <stdlib.h>
 #include "../common/data-gen.h"
 
 #define CHUNK_SIZE	65535
