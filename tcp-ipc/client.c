@@ -10,6 +10,11 @@ int main(int argc , char *argv[])
 	returnType = atoi(argv[1]);
     msgSize = atoi(argv[2]);
 
+#ifdef DEBUG
+    printf("Client : Return Type = %d\n", returnType);
+    printf("Client : Msg Size = %d\n", msgSize);
+#endif
+
 	int socket_desc;
 	struct sockaddr_in server;
 	char *server_reply = malloc(sizeof(char) * msgSize);
@@ -49,12 +54,12 @@ int main(int argc , char *argv[])
 
 	if (returnType == 0)
 	{
-		write(socket_desc, "0", 1);
+		sendBuffer(socket_desc, "0", 1);
 	}
 	else
 	{
 		//Echo msg back to server
-		write(socket_desc , server_reply , msgSize);
+		sendBuffer(socket_desc , server_reply , msgSize);
 	}
 	
 	close(socket_desc);
