@@ -10,6 +10,9 @@
 #include <semaphore.h>
 
 #define BUF_SIZE 1024
+#define SEM_FULL "sem_full"
+#define SEM_EMPTY "sem_empty"
+#define MMAP_PATH "mem_mapping"
 
 int main(int argc, char *argv[]) {
 
@@ -20,14 +23,15 @@ int main(int argc, char *argv[]) {
 	int return_val = atoi(argv[2]);
 	char *consumer_message = (char *)malloc(sizeof(char *) * (message_size + 1));
 	
-	sem_t full, empty;
+	sem_t *full = sem_open(SEM_FULL, 0);
+	sem_t *empty = sem_open(SEM_EMPTY, 0);
 	pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 //	sem_init(&full, 1, 0);
 //	sem_init(&empty, 1, 1);
 //	sem_init(&mutex, 1, 0);
 
 
-	fd = shm_open("mem_mapping.txt", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+	fd = shm_open(MMAP_PATH, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
 	if (fd == -1)
 	{
 		int errsv = errno;
@@ -40,22 +44,28 @@ int main(int argc, char *argv[]) {
 	if (memory == MAP_FAILED) 
 		return -1;
 
-	
+	int bytes = BUF_SIZE;	
 	while(number_bytes_left > 0) {
-		sem_wait(&full);
+		sem_wait(full);
 		//sem_wait(&mutex);
 		pthread_mutex_lock(&mutex);
+	
+		if (number_bytes_left < BUF_SIZE)
+			bytes = number_bytes_left;
 
-		memcpy(consumer_message, memory, BUF_SIZE);
-		number_bytes_left -= BUF_SIZE;
+		memcpy(consumer_message, memory, bytes);
+		number_bytes_left -= bytes;
+		printf("Read %d bytes\n", bytes);	
 		//sem_post(&mutex);	
 		pthread_mutex_unlock(&mutex);
-		sem_post(&empty);
+		sem_post(empty);
 	}
 
 
 	printf("Consumer read: %s\n", consumer_message);
 
+	munmap(memory, BUF_SIZE);
+ 	shm_unlink(MMAP_PATH);
 
 	return 0;
 }

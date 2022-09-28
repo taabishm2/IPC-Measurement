@@ -10,6 +10,9 @@
 #include <semaphore.h>
 
 #define BUF_SIZE 1024
+#define SEM_FULL "sem_full"
+#define SEM_EMPTY "sem_empty"
+#define MMAP_PATH "mem_mapping"
 
 int main(int argc, char *argv[]) {
 
@@ -20,15 +23,19 @@ int main(int argc, char *argv[]) {
 	int return_val = atoi(argv[2]);
 	char *producer_message = (char *)malloc(sizeof(char *) * (message_size + 1));
 	memset(producer_message, 'p', sizeof(char) * message_size);
+
+	sem_unlink(SEM_FULL);
+	sem_unlink(SEM_EMPTY);
 	
-	sem_t full, empty;
+	sem_t *full = sem_open(SEM_FULL, O_CREAT, S_IRUSR | S_IWUSR, 0);
+	sem_t *empty = sem_open(SEM_EMPTY, O_CREAT, S_IRUSR | S_IWUSR, 1);
 	pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-	sem_init(&full, 1, 0);
-	sem_init(&empty, 1, 1);
+//	sem_init(&full, 1, 0);
+//	sem_init(&empty, 1, 1);
 //	sem_init(&mutex, 1, 0);
 
 
-	fd = shm_open("mem_mapping.txt", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+	fd = shm_open(MMAP_PATH, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
 	if (fd == -1)
 	{
 		int errsv = errno;
@@ -41,22 +48,25 @@ int main(int argc, char *argv[]) {
 	if (memory == MAP_FAILED) 
 		return -1;
 
-	
+	int bytes = BUF_SIZE;
 	while(number_bytes_left > 0) {
-		sem_wait(&empty);
+		sem_wait(empty);
 		//sem_wait(&mutex);
 		pthread_mutex_lock(&mutex);
+		
+		if (number_bytes_left < BUF_SIZE)
+			bytes = number_bytes_left;
 
-		memcpy(memory, producer_message, BUF_SIZE);
-		number_bytes_left -= BUF_SIZE;
+		memcpy(memory, producer_message, bytes);
+		number_bytes_left -= bytes;
 		//sem_post(&mutex);	
+		printf("Wrote %d bytes\n", bytes);
 		pthread_mutex_unlock(&mutex);
-		sem_post(&full);
+		sem_post(full);
 	}
 
 
 	printf("Producer wrote: %s\n", memory);
-
 
 	return 0;
 }
