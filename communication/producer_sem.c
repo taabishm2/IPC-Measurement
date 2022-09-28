@@ -15,6 +15,8 @@
 #define MMAP_PATH "mem_mapping"
 #define CONSUME "consume"
 
+#define DEBUG
+
 int main(int argc, char *argv[]) {
 
 	int fd = 0;
@@ -23,15 +25,17 @@ int main(int argc, char *argv[]) {
 	int number_bytes_left = message_size;	
 	int return_val = atoi(argv[2]);
 	char *producer_message = (char *)malloc(sizeof(char *) * (message_size + 1));
+	char *consumer_message = (char *)malloc(sizeof(char *) * (message_size + 1));
 	memset(producer_message, 'p', sizeof(char) * message_size);
 
 	sem_unlink(SEM_FULL);
 	sem_unlink(SEM_EMPTY);
-	
+	sem_unlink(CONSUME);
+
 	sem_t *full = sem_open(SEM_FULL, O_CREAT, S_IRUSR | S_IWUSR, 0);
 	sem_t *empty = sem_open(SEM_EMPTY, O_CREAT, S_IRUSR | S_IWUSR, 1);
 	pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-	sem_t *consume = sem_open(CONSUME, 0);
+	sem_t *consume = sem_open(CONSUME, O_CREAT, S_IRUSR | S_IWUSR,  0);
 
 
 	fd = shm_open(MMAP_PATH, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
@@ -65,8 +69,27 @@ int main(int argc, char *argv[]) {
 		sem_post(full);
 	}
 
-	if (return_val == 0)
-		sem_wait(consume);
+	sem_wait(consume);
+	if (return_val == 1) {
+		number_bytes_left = message_size; 
+		bytes = BUF_SIZE;
+		while(number_bytes_left > 0) {
+			sem_wait(full);
+			pthread_mutex_lock(&mutex);
+		
+			if (number_bytes_left < BUF_SIZE)
+				bytes = number_bytes_left;
+			
+			memcpy(consumer_message, memory, bytes);
+			number_bytes_left -= bytes;
+#ifdef DEBUG
+			printf("Read %d bytes\n", bytes);
+#endif
+
+			pthread_mutex_unlock(&mutex);
+			sem_post(empty);
+		}
+	}
 
 
 	return 0;

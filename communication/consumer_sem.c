@@ -15,6 +15,8 @@
 #define MMAP_PATH "mem_mapping"
 #define CONSUME "consume"
 
+#define DEBUG
+
 int main(int argc, char *argv[]) {
 
 	int fd = 0;
@@ -23,11 +25,11 @@ int main(int argc, char *argv[]) {
 	int number_bytes_left = message_size;	
 	int return_val = atoi(argv[2]);
 	char *consumer_message = (char *)malloc(sizeof(char *) * (message_size + 1));
-	
+
 	sem_t *full = sem_open(SEM_FULL, 0);
 	sem_t *empty = sem_open(SEM_EMPTY, 0);
 	pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-	sem_t *consume = sem_open(CONSUME, O_CREAT, S_IRUSR | S_IWUSR, 0);
+	sem_t *consume = sem_open(CONSUME, 0);
 
 	fd = shm_open(MMAP_PATH, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
 	if (fd == -1)
@@ -59,13 +61,28 @@ int main(int argc, char *argv[]) {
 		sem_post(empty);
 	}
 
-#ifdef DEBUG
-	printf("Consumer read: %s\n", consumer_message);
-#endif
+	sem_post(consume);
+	if (return_val == 1) {
+		number_bytes_left = message_size;
+		bytes = BUF_SIZE;
+		while(number_bytes_left > 0) {
+			sem_wait(empty);
+			pthread_mutex_lock(&mutex);
+	
+			if (number_bytes_left < BUF_SIZE)
+				bytes = number_bytes_left;
 
-	// if 0, only send single ack back
-	if (return_val == 0)
-		sem_post(consume);
+			memcpy(memory, consumer_message, bytes);
+			number_bytes_left -= bytes;
+#ifdef DEBUG
+			printf("Wrote %d bytes\n", bytes);
+#endif
+			pthread_mutex_unlock(&mutex);
+			sem_post(full);
+
+		}
+	}
+
 
 
 	munmap(memory, BUF_SIZE);
