@@ -8,15 +8,17 @@
 #include <unistd.h>
 #include <string.h>
 
-#define PORT 8080
+#define PORT 8888
 
 int main(int argc, char *argv[]) {
 	
 	int sockfd, connection;
 	struct sockaddr_in server_address, client_address;
 	int message_size = atoi(argv[1]);
+	int number_bytes_left = message_size;
 	int return_val = atoi(argv[2]);
 	char *read_message = (char*)malloc(sizeof(char) * (message_size + 1));
+	int bytes;
 
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if (sockfd == -1)
@@ -42,20 +44,25 @@ int main(int argc, char *argv[]) {
 	printf("Connected to client.\n");
 #endif
 
-	if (read(connection, read_message, message_size) == -1)
-		return -1;
+	while (number_bytes_left > 0) {
+		bytes = read(connection, read_message, message_size);
+		number_bytes_left -= bytes;
+	}
 
 #ifdef DEBUG
 	printf("Read from the client: %s\n", read_message);
 #endif
 
-	if (return_val == 0) {
-		if (write(connection, read_message, 1) == -1)
-			return -1;
-	} else {
-		if (write(connection, read_message, message_size) == -1)
-			return -1;
-	}
+
+	if (return_val == 0)
+     number_bytes_left = 1;
+ 	else
+ 		number_bytes_left = message_size;
+ 
+ 	while (number_bytes_left > 0) {
+ 		bytes = write(connection, read_message, number_bytes_left);
+ 		number_bytes_left -= bytes;
+ 	}
 
 	close(connection);
 	close(sockfd);

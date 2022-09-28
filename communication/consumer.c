@@ -7,6 +7,7 @@
 #include <pthread.h>
 #include <time.h>
 
+#define BUF_SIZE 1024
 
 int main(int argc, char *argv[]) {
 
@@ -22,7 +23,7 @@ int main(int argc, char *argv[]) {
 	if (fd == -1)
 		return -1;
 
-	memory = mmap(NULL, 256, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	memory = mmap(NULL, BUF_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 	if (memory == MAP_FAILED) 
 		return -1;
 

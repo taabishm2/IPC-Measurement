@@ -8,14 +8,16 @@
 #include <unistd.h>
 #include <string.h>
 
-#define SERVPORT 8080
+#define SERVPORT 8888
 
 int main(int argc, char *argv[]) {
 
 	int sockfd;
 	struct sockaddr_in server_address;
 	int message_size = atoi(argv[1]);
+	int number_bytes_left = message_size;
 	int return_val = atoi(argv[2]);
+	int bytes;
 
 	char *read_message = (char *)malloc(sizeof(char) * (message_size + 1));
 	char *write_message = (char *)malloc(sizeof(char) * (message_size + 1));
@@ -35,15 +37,24 @@ int main(int argc, char *argv[]) {
 	printf("Connected to server.\n");
 #endif
 
-	if (write(sockfd, write_message, message_size) == -1)
-		return -1;
+	while (number_bytes_left > 0 ) {
+		bytes = write(sockfd, write_message, number_bytes_left);
+		number_bytes_left -= bytes;
+	}
 
 #ifdef DEBUG
 	printf("Wrote to server: %s\n", write_message);
 #endif
 
-	if (read(sockfd, read_message, message_size) == -1)
-		return -1;
+	if (return_val == 0)
+		number_bytes_left = 1;
+	else
+		number_bytes_left = message_size;
+	
+	while (number_bytes_left > 0) {
+		bytes = read(sockfd, read_message, number_bytes_left);
+		number_bytes_left -= bytes;
+	}
 
 #ifdef DEBUG
 	printf("Read from server: %s\n", read_message);
