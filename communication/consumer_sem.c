@@ -13,6 +13,7 @@
 #define SEM_FULL "sem_full"
 #define SEM_EMPTY "sem_empty"
 #define MMAP_PATH "mem_mapping"
+#define CONSUME "consume"
 
 int main(int argc, char *argv[]) {
 
@@ -26,10 +27,7 @@ int main(int argc, char *argv[]) {
 	sem_t *full = sem_open(SEM_FULL, 0);
 	sem_t *empty = sem_open(SEM_EMPTY, 0);
 	pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-//	sem_init(&full, 1, 0);
-//	sem_init(&empty, 1, 1);
-//	sem_init(&mutex, 1, 0);
-
+	sem_t *consume = sem_open(CONSUME, O_CREAT, S_IRUSR | S_IWUSR, 0);
 
 	fd = shm_open(MMAP_PATH, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
 	if (fd == -1)
@@ -47,7 +45,6 @@ int main(int argc, char *argv[]) {
 	int bytes = BUF_SIZE;	
 	while(number_bytes_left > 0) {
 		sem_wait(full);
-		//sem_wait(&mutex);
 		pthread_mutex_lock(&mutex);
 	
 		if (number_bytes_left < BUF_SIZE)
@@ -55,14 +52,21 @@ int main(int argc, char *argv[]) {
 
 		memcpy(consumer_message, memory, bytes);
 		number_bytes_left -= bytes;
+#ifdef DEBUG
 		printf("Read %d bytes\n", bytes);	
-		//sem_post(&mutex);	
+#endif
 		pthread_mutex_unlock(&mutex);
 		sem_post(empty);
 	}
 
-
+#ifdef DEBUG
 	printf("Consumer read: %s\n", consumer_message);
+#endif
+
+	// if 0, only send single ack back
+	if (return_val == 0)
+		sem_post(consume);
+
 
 	munmap(memory, BUF_SIZE);
  	shm_unlink(MMAP_PATH);

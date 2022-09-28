@@ -13,6 +13,7 @@
 #define SEM_FULL "sem_full"
 #define SEM_EMPTY "sem_empty"
 #define MMAP_PATH "mem_mapping"
+#define CONSUME "consume"
 
 int main(int argc, char *argv[]) {
 
@@ -30,9 +31,7 @@ int main(int argc, char *argv[]) {
 	sem_t *full = sem_open(SEM_FULL, O_CREAT, S_IRUSR | S_IWUSR, 0);
 	sem_t *empty = sem_open(SEM_EMPTY, O_CREAT, S_IRUSR | S_IWUSR, 1);
 	pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-//	sem_init(&full, 1, 0);
-//	sem_init(&empty, 1, 1);
-//	sem_init(&mutex, 1, 0);
+	sem_t *consume = sem_open(CONSUME, 0);
 
 
 	fd = shm_open(MMAP_PATH, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
@@ -51,7 +50,6 @@ int main(int argc, char *argv[]) {
 	int bytes = BUF_SIZE;
 	while(number_bytes_left > 0) {
 		sem_wait(empty);
-		//sem_wait(&mutex);
 		pthread_mutex_lock(&mutex);
 		
 		if (number_bytes_left < BUF_SIZE)
@@ -59,14 +57,17 @@ int main(int argc, char *argv[]) {
 
 		memcpy(memory, producer_message, bytes);
 		number_bytes_left -= bytes;
-		//sem_post(&mutex);	
+		
+#ifdef DEBUG
 		printf("Wrote %d bytes\n", bytes);
+#endif
 		pthread_mutex_unlock(&mutex);
 		sem_post(full);
 	}
 
+	if (return_val == 0)
+		sem_wait(consume);
 
-	printf("Producer wrote: %s\n", memory);
 
 	return 0;
 }
