@@ -21,13 +21,14 @@ int main(int argc, char *argv[]) {
 	char *producer_message = (char *)malloc(sizeof(char *) * (message_size + 1));
 	memset(producer_message, 'p', sizeof(char) * message_size);
 	
-	sem_t full, empty, mutex;
+	sem_t full, empty;
+	pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 	sem_init(&full, 1, 0);
 	sem_init(&empty, 1, 1);
-	sem_init(&mutex, 1, 0);
+//	sem_init(&mutex, 1, 0);
 
 
-	fd = open("mem_mapping.txt", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
+	fd = shm_open("mem_mapping.txt", O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
 	if (fd == -1)
 	{
 		int errsv = errno;
@@ -43,11 +44,13 @@ int main(int argc, char *argv[]) {
 	
 	while(number_bytes_left > 0) {
 		sem_wait(&empty);
-		sem_wait(&mutex);
-		
+		//sem_wait(&mutex);
+		pthread_mutex_lock(&mutex);
+
 		memcpy(memory, producer_message, BUF_SIZE);
 		number_bytes_left -= BUF_SIZE;
-		sem_post(&mutex);	
+		//sem_post(&mutex);	
+		pthread_mutex_unlock(&mutex);
 		sem_post(&full);
 	}
 
