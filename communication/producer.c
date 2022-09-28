@@ -8,6 +8,7 @@
 #include <time.h>
 #include <errno.h>
 
+#define BUF_SIZE 1024
 
 int main(int argc, char *argv[]) {
 
@@ -29,7 +30,7 @@ int main(int argc, char *argv[]) {
 	}
 	ftruncate(fd, message_size);
 
-	memory = mmap(NULL, 256, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	memory = mmap(NULL, BUF_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 	if (memory == MAP_FAILED) 
 		return -1;
 
