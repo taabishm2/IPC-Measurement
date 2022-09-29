@@ -3,8 +3,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/wait.h>
+#include "../common/timing.h"
 
-#define DEBUG
+//#define DEBUG
 
 static ssize_t multi_write(int fd, const char *buffer, size_t nbytes);
 static ssize_t multi_read(int fd, char *buffer, size_t nbytes);
@@ -41,6 +42,8 @@ int main(int argc, char *argv[]) {
 		// Close writing end of child's write pipe
 		close(pipefd_child_write[1]);
 
+        unsigned long start, end;
+        start = time_tsc_start();
 		// Write parent's message
         multi_write(pipefd_parent_write[1], parent_message, message_size); 		
 
@@ -51,7 +54,7 @@ int main(int argc, char *argv[]) {
 
 		close(pipefd_parent_write[1]);
 
-		wait(NULL);
+		//wait(NULL);
 		
 		// Read child's message 
         int response_size = 1;
@@ -65,6 +68,9 @@ int main(int argc, char *argv[]) {
 #endif
 
 		close(pipefd_parent_write[0]);	
+        end = time_tsc_end();
+        
+        printf("%Lf\n", convert_tsc(start, end));
 
 	// This is the child
     } else {
