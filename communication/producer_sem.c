@@ -8,14 +8,15 @@
 #include <time.h>
 #include <errno.h>
 #include <semaphore.h>
+#include "../common/timing.h"
 
-#define BUF_SIZE 1024
+#define BUF_SIZE (16*1024)
 #define SEM_FULL "sem_full"
 #define SEM_EMPTY "sem_empty"
 #define MMAP_PATH "mem_mapping"
 #define CONSUME "consume"
 
-#define DEBUG
+//#define DEBUG
 
 int main(int argc, char *argv[]) {
 
@@ -51,7 +52,14 @@ int main(int argc, char *argv[]) {
 	if (memory == MAP_FAILED) 
 		return -1;
 
+    if (fork() == 0)
+    {
+        execl("consumer_sem", "consumer_sem", argv[1], argv[2], NULL);
+    }
+
+    unsigned long start, end;
 	int bytes = BUF_SIZE;
+    start = time_tsc_start();
 	while(number_bytes_left > 0) {
 		sem_wait(empty);
 		pthread_mutex_lock(&mutex);
@@ -89,9 +97,30 @@ int main(int argc, char *argv[]) {
 			pthread_mutex_unlock(&mutex);
 			sem_post(empty);
 		}
-	}
+	} else {
+    	number_bytes_left = 1;
+		bytes = BUF_SIZE;
+		while(number_bytes_left > 0) {
+			sem_wait(full);
+			pthread_mutex_lock(&mutex);
+		
+			if (number_bytes_left < BUF_SIZE)
+				bytes = number_bytes_left;
+			
+			memcpy(consumer_message, memory, bytes);
+			number_bytes_left -= bytes;
+#ifdef DEBUG
+			printf("Read %d bytes\n", bytes);
+#endif
 
+			pthread_mutex_unlock(&mutex);
+			sem_post(empty);
+		
+        }
+    }
 
+    end = time_tsc_end();
+    printf("%Lf\n", convert_tsc(start, end));
 	return 0;
 }
 

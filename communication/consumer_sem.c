@@ -9,13 +9,13 @@
 #include <errno.h>
 #include <semaphore.h>
 
-#define BUF_SIZE 1024
+#define BUF_SIZE (16*1024)
 #define SEM_FULL "sem_full"
 #define SEM_EMPTY "sem_empty"
 #define MMAP_PATH "mem_mapping"
 #define CONSUME "consume"
 
-#define DEBUG
+//#define DEBUG
 
 int main(int argc, char *argv[]) {
 
@@ -81,9 +81,26 @@ int main(int argc, char *argv[]) {
 			sem_post(full);
 
 		}
-	}
+	} else {
+    	number_bytes_left = 1;
+		bytes = BUF_SIZE;
+		while(number_bytes_left > 0) {
+			sem_wait(empty);
+			pthread_mutex_lock(&mutex);
+	
+			if (number_bytes_left < BUF_SIZE)
+				bytes = number_bytes_left;
 
+			memcpy(memory, consumer_message, bytes);
+			number_bytes_left -= bytes;
+#ifdef DEBUG
+			printf("Wrote %d bytes\n", bytes);
+#endif
+			pthread_mutex_unlock(&mutex);
+			sem_post(full);
 
+		}
+    }
 
 	munmap(memory, BUF_SIZE);
  	shm_unlink(MMAP_PATH);
