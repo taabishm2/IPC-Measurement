@@ -7,9 +7,10 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
 
-#define PORT 8888
-
+//#define PORT 39564
+//#define DEBUG
 int main(int argc, char *argv[]) {
 	
 	int sockfd, connection;
@@ -17,6 +18,7 @@ int main(int argc, char *argv[]) {
 	int message_size = atoi(argv[1]);
 	int number_bytes_left = message_size;
 	int return_val = atoi(argv[2]);
+    int PORT = atoi(argv[3]);
 	char *read_message = (char*)malloc(sizeof(char) * (message_size + 1));
 	int bytes;
 
@@ -32,13 +34,20 @@ int main(int argc, char *argv[]) {
 	memset(&(server_address.sin_zero), 0, 8);
 
 	if (bind(sockfd, (struct sockaddr *)&server_address, sizeof(server_address)) == -1)
+    {
+        printf("server : Bind error!\n");
+        printf("Error: %s\n", strerror(errno));
 		return -1;
+    }
 
 	if (listen(sockfd, 5) == -1)
+    {
+        printf("server : listen error!\n");
 		return -1;
+    }
 
-	int len = sizeof(client_address);	
-	connection = accept(sockfd, (struct sockaddr *)&client_address, &client_address);
+	unsigned int len = sizeof(client_address);	
+	connection = accept(sockfd, (struct sockaddr *)&client_address, &len);
 
 #ifdef DEBUG	
 	printf("Connected to client.\n");
@@ -50,7 +59,7 @@ int main(int argc, char *argv[]) {
 	}
 
 #ifdef DEBUG
-	printf("Read from the client: %s\n", read_message);
+	printf("Read from the client: %d\n", message_size);
 #endif
 
 
@@ -64,7 +73,6 @@ int main(int argc, char *argv[]) {
  		number_bytes_left -= bytes;
  	}
 
-	close(connection);
 	close(sockfd);
 
   return 0;
